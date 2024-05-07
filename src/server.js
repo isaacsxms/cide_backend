@@ -27,9 +27,23 @@ mongoose.connect(mongoUrl + dbName)
         console.error("Error connection to DB", error)
     });
 
-const RegisteredUser = mongoose.model('matriculados', {
+const UserModel = mongoose.model('matriculados', {
     username: { type: String },
-    password: { type: String }
+    password: { type: String },
+    name: { type: String },
+    surname: { type: String },
+    second_surname: { type: String },
+    address: { type: String},
+    date_of_birth: { type: String },
+    identify: { type: String },
+    tutor: {
+        name: { type: String },
+        identity: { type: String }
+    },
+    telephone: { type: String },
+    email: { type: String },
+    enrollment_date: { type: String },
+    iban: { type: String }
 });
 
 // Route for handling login requests
@@ -37,7 +51,7 @@ app.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
     try {
-        const user = await RegisteredUser.findOne({ username }).exec()
+        const user = await UserModel.findOne({ username }).exec();
         
         console.log("User found:", user);
 
@@ -50,7 +64,7 @@ app.post('/login', async (req, res) => {
             return res.status(401).send("Invalid password");
         }
 
-        res.status(200).send("Login successful");
+        res.status(200).send("Login successful!");
 
     } catch (error) {
         console.error("Error finding user: ", error);
@@ -58,6 +72,33 @@ app.post('/login', async (req, res) => {
     }
 })
 
+
+app.put('/changepassword', async (req, res) => {
+    console.log("Body " + req.body)
+    const { username, identityNumber, newPassword} = req.body;
+    let user;
+    try{
+        user = await UserModel.findOne({ username }).exec();
+        console.log("User found:", user);
+
+        if(!user) {
+            return res.status(401).send("Invalid username");
+        }
+
+        if(user.identity !== identityNumber) {
+            return res.status(401).send("Invalid identity number")
+        }
+
+    } catch (error) {
+        console.error("Error finding user: ", error);
+        return res.status(500).send("Internal Server Error");
+    }
+
+    user.password = newPassword;
+    user.save();
+    res.status(200).send("Password changed succesfully!")
+
+})
 app.listen(port, () => {
     console.log(`Listening on port ${port} 🚀`)
 })
