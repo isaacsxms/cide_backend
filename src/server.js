@@ -35,7 +35,7 @@ const UserModel = mongoose.model('matriculados', {
     second_surname: { type: String },
     address: { type: String},
     date_of_birth: { type: String },
-    identify: { type: String },
+    identity: { type: String },
     tutor: {
         name: { type: String },
         identity: { type: String }
@@ -43,7 +43,8 @@ const UserModel = mongoose.model('matriculados', {
     telephone: { type: String },
     email: { type: String },
     enrollment_date: { type: String },
-    iban: { type: String }
+    iban: { type: String },
+    enrolled_in: { type: String }
 });
 
 // Route for handling login requests
@@ -53,8 +54,6 @@ app.post('/login', async (req, res) => {
     try {
         const user = await UserModel.findOne({ username }).exec();
         
-        console.log("User found:", user);
-
         if(!user) {
             return res.status(401).send("Invalid username");
         }
@@ -79,7 +78,6 @@ app.put('/changepassword', async (req, res) => {
     let user;
     try{
         user = await UserModel.findOne({ username }).exec();
-        console.log("User found:", user);
 
         if(!user) {
             return res.status(401).send("Invalid username");
@@ -102,3 +100,31 @@ app.put('/changepassword', async (req, res) => {
 app.listen(port, () => {
     console.log(`Listening on port ${port} 🚀`)
 })
+
+app.post('/register', async (req, res) => {
+    try {
+        const { username, password, name, surname, identity } = req.body;
+        if (!username || !password || !name || !surname || !identity) {
+            console.log("Body: ", req.body)
+            return res.status(400).send("Missing required fields");
+        }
+
+        // Check if the username is already taken
+        const existingUser = await UserModel.findOne({ username }).exec();
+        if (existingUser) {
+            return res.status(400).send("Username already exists");
+        }
+
+        // Create a new user object
+        const newUser = new UserModel(req.body);
+
+        // Save the user data to MongoDB
+        await newUser.save();
+
+        // Send a success response
+        res.status(201).send("User registered successfully");
+    } catch (error) {
+        console.error("Error registering user: ", error);
+        res.status(500).send("Internal Server Error");
+    }
+});
