@@ -47,10 +47,14 @@ const UserModel = mongoose.model('matriculados', {
     enrolled_in: { type: String }
 });
 
+app.listen(port, () => {
+    console.log(`Listening on port ${port} 🚀`)
+})
+
 // Route for handling login requests
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
-
+    console.log(req.body)
     try {
         const user = await UserModel.findOne({ username }).exec();
         
@@ -63,7 +67,10 @@ app.post('/login', async (req, res) => {
             return res.status(401).send("Invalid password");
         }
 
-        res.status(200).send("Login successful!");
+        res.status(200).send({
+            message: "Login successful!",
+            userId: user._id
+        });
 
     } catch (error) {
         console.error("Error finding user: ", error);
@@ -74,16 +81,18 @@ app.post('/login', async (req, res) => {
 
 app.put('/changepassword', async (req, res) => {
     console.log("Body " + req.body)
-    const { username, identityNumber, newPassword} = req.body;
+    const { username, identityDocument, newPassword} = req.body;
     let user;
     try{
         user = await UserModel.findOne({ username }).exec();
 
+        console.log("REQ BODY: ", req.body)
+        console.log("identity reqBody: ", identityDocument)
         if(!user) {
             return res.status(401).send("Invalid username");
         }
 
-        if(user.identity !== identityNumber) {
+        if(user.identity !== identityDocument) {
             return res.status(401).send("Invalid identity number")
         }
 
@@ -97,10 +106,6 @@ app.put('/changepassword', async (req, res) => {
     res.status(200).send("Password changed succesfully!")
 
 })
-app.listen(port, () => {
-    console.log(`Listening on port ${port} 🚀`)
-})
-
 app.post('/register', async (req, res) => {
     try {
         const { username, password, name, surname, identity } = req.body;
@@ -128,3 +133,27 @@ app.post('/register', async (req, res) => {
         res.status(500).send("Internal Server Error");
     }
 });
+
+app.get('/user/profile/:id', async (req, res) => {
+    const userId = req.params.id
+    console.log("User: ", userId)
+
+    try {
+        const user = await UserModel.findById(userId);
+
+        if (!user) {
+            return res.status(404).send({ message: 'User not found' })
+        }
+
+        res.status(200).send({
+            message: 'Acquired user profile!',
+            username: user.username
+        });
+    } catch(error) {
+        console.error('Error fetching user profile:', error);
+        res.status(500).send({ message: 'Internal Server Error' });
+    }
+
+
+   
+})
