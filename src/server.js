@@ -147,7 +147,8 @@ app.get('/user/profile/:id', async (req, res) => {
 
         res.status(200).send({
             message: 'Acquired user profile!',
-            username: user.username
+            username: user.username,
+            name: user.name
         });
     } catch(error) {
         console.error('Error fetching user profile:', error);
