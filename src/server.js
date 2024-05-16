@@ -44,7 +44,8 @@ const UserModel = mongoose.model('matriculados', {
     email: { type: String },
     enrollment_date: { type: String },
     iban: { type: String },
-    enrolled_in: { type: String }
+    enrolled_in: { type: String },
+    rol: { type: String }
 });
 
 app.listen(port, () => {
@@ -69,8 +70,9 @@ app.post('/login', async (req, res) => {
 
         res.status(200).send({
             message: "Login successful!",
-            userId: user._id
-        });
+            userId: user._id,
+            rol: user.rol
+          });
 
     } catch (error) {
         console.error("Error finding user: ", error);
@@ -113,6 +115,7 @@ app.post('/register', async (req, res) => {
             console.log("Body: ", req.body)
             return res.status(400).send("Missing required fields");
         }
+        console.log("BODY: ", req.body)
 
         // Check if the username is already taken
         const existingUser = await UserModel.findOne({ username }).exec();
@@ -121,8 +124,11 @@ app.post('/register', async (req, res) => {
         }
 
         // Create a new user object
-        const newUser = new UserModel(req.body);
-
+        const newUser = new UserModel({
+            ...req.body,
+            rol: "user"
+        });
+    
         // Save the user data to MongoDB
         await newUser.save();
 
@@ -147,8 +153,8 @@ app.get('/user/profile/:id', async (req, res) => {
 
         res.status(200).send({
             message: 'Acquired user profile!',
-            username: user.username,
-            name: user.name
+           username: user.username,
+           name: user.name
         });
     } catch(error) {
         console.error('Error fetching user profile:', error);
