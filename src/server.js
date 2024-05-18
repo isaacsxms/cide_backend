@@ -48,6 +48,46 @@ const UserModel = mongoose.model('matriculados', {
     rol: { type: String }
 });
 
+const purchaseSchema = new mongoose.Schema({
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    },
+    username: {
+        type: String
+    },
+    menjadorQuantity: {
+        type: Number,
+    },
+    matineraQuantity: {
+        type: Number,
+    },
+    articles: [
+        {
+            id: String,
+            name: String,
+            price: Number,
+        }
+    ],
+    extracurriculars: [
+        {
+            id: String,
+            name: String,
+            price: Number,
+        }
+    ],
+    total: {
+        type: Number,
+    },
+    purchaseDate: {
+        type: String
+    }
+});
+
+const validatePurchase = mongoose.model('validar-compras', purchaseSchema);
+
+const invoiceModel = mongoose.model('facturas', purchaseSchema)
+
 app.listen(port, () => {
     console.log(`Listening on port ${port} 🚀`)
 })
@@ -167,7 +207,78 @@ app.get('/user/profile/:id', async (req, res) => {
         console.error('Error fetching user profile:', error);
         res.status(500).send({ message: 'Internal Server Error' });
     }
-
-
-   
 })
+
+
+app.post('/user/:id/purchase', async (req, res) => {
+    try {
+        console.log('Purchase request body:', req.body);
+
+        const userId = req.params.id;
+        const user = await UserModel.findById(userId)
+        const currentDate = new Date();
+        const formattedDate = `${currentDate.getDate().toString().padStart(2, '0')}/${(currentDate.getMonth() + 1).toString().padStart(2, '0')}/${currentDate.getFullYear()}`;
+
+        const newPurchase = new validatePurchase({
+            ...req.body,
+            userId: userId,
+            username: user.username,
+            purchaseDate: formattedDate
+        });
+        // Save the user data to MongoDB
+        await newPurchase.save();
+        res.status(201).send("Purchased succesfully!");
+    } catch(error) {
+        console.error('Error saving purchase:', error);
+        res.status(500).send('Internal Server Error')
+    }
+    
+
+})
+
+app.get('/admin/validations', async (req, res) => {
+    try {
+        const validations = await validatePurchase.find({});
+        res.status(200).json(validations);
+    } catch(error) {
+        res.status(500).send('Internal Server Error')
+    }
+})
+
+app.delete('/admin/validations/:purchaseId', async (req, res) => {
+    try {
+        const purchaseId = req.params.purchaseId;
+
+        await validatePurchase.findByIdAndDelete(purchaseId)
+        
+        res.status(201).send('Deleted purchase succesfully!')
+    } catch(error) {
+        console.error('Error deleting purchase:', error);
+        res.status(500).send('Internal Server Error')
+    }
+})
+
+app.post('/admin/invoice', async (req, res) => {
+    try {
+        const newInvoice = new invoiceModel({
+            ...req.body
+        });
+
+        await newInvoice.save();
+        res.status(200).send('Arrived here hello!')
+    } catch(error) {
+        res.status(500).send('Internal Server Error')
+    }
+})
+
+app.get('/user/invoices/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        // Query invoices collection based on user ID
+        const invoices = await invoiceModel.find({ userId: userId });
+        res.status(200).json(invoices);
+    } catch(error) {
+        console.error('Error fetching invoices:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
