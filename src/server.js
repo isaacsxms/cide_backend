@@ -56,17 +56,12 @@ const purchaseSchema = new mongoose.Schema({
     username: {
         type: String
     },
-    menjadorQuantity: {
-        type: Number,
-    },
-    matineraQuantity: {
-        type: Number,
-    },
     articles: [
         {
             id: String,
             name: String,
             price: Number,
+            quantity: Number
         }
     ],
     extracurriculars: [
@@ -279,6 +274,37 @@ app.get('/user/invoices/:userId', async (req, res) => {
         res.status(200).json(invoices);
     } catch(error) {
         console.error('Error fetching invoices:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+app.get('/user/invoice/:invoiceId', async (req, res) => {
+    try {
+        const invoiceId = req.params.invoiceId;
+        
+        // Query the invoice model to find the invoice by its ID
+        const invoice = await invoiceModel.findById(invoiceId);
+        
+        if (!invoice) {
+            return res.status(404).send({ message: 'Invoice not found' });
+        }
+        
+        // Return the invoice information
+        res.status(200).json(invoice);
+    } catch(error) {
+        console.error('Error fetching invoice:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+
+app.get('/users', async (req, res) => {
+    try {
+        // Fetch all users from the matriculados collection
+        const users = await UserModel.find({});
+        res.status(200).json(users);
+    } catch (error) {
+        console.error('Error fetching users:', error);
         res.status(500).send('Internal Server Error');
     }
 });
