@@ -204,6 +204,25 @@ app.get('/user/profile/:id', async (req, res) => {
     }
 })
 
+app.get('/users/search', async (req, res) => {
+
+    try {
+        const users = await UserModel.find({});
+
+        if (!users) {
+            return res.status(404).send({ message: 'Users not found' })
+        }
+
+        res.status(200).send({
+            message: 'Acquired user profile!',
+            users: users
+        });
+
+    } catch(error) {
+        console.error('Error fetching users:', error);
+        res.status(500).send({ message: 'Internal Server Error' });
+    }
+})
 
 app.post('/user/:id/purchase', async (req, res) => {
     try {
