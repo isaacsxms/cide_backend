@@ -45,7 +45,8 @@ const UserModel = mongoose.model('matriculados', {
     enrollment_date: { type: String },
     iban: { type: String },
     enrolled_in: { type: String },
-    rol: { type: String }
+    rol: { type: String },
+    large_family: { type: String }
 });
 
 const purchaseSchema = new mongoose.Schema({
@@ -168,7 +169,10 @@ app.post('/register', async (req, res) => {
         await newUser.save();
 
         // Send a success response
-        res.status(201).send("User registered successfully");
+        res.status(201).send({
+            message: "User registered successfully",
+            userId: newUser._id
+        });
     } catch (error) {
         console.error("Error registering user: ", error);
         res.status(500).send("Internal Server Error");
@@ -196,7 +200,8 @@ app.get('/user/profile/:id', async (req, res) => {
             fecha_de_nacimiento: user.date_of_birth,
             numero_de_identidad: user.identity,
             telefono: user.telephone,
-            email: user.email
+            email: user.email,
+            familia_nombrosa: user.large_family
         });
     } catch(error) {
         console.error('Error fetching user profile:', error);
